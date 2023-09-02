@@ -1,1 +1,98 @@
-select * from table;
+#Which disease has a maximum number of claims.
+- ;with diseasecte as (select disease_name,
+ROW_NUMBER() OVER (PARTITION BY disease_name ORDER BY disease_name)cnt
+from test.claims
+)
+,diseasecte2 as
+(select max(cnt) cnt from diseasecte)
+select b.disease_name,b.cnt from diseasecte2 a
+inner join diseasecte b
+on a.cnt=b.cnt
+
+
+Find those Subscribers having age less than 30 and they subscribe any subgroup.
+- select birth_date,first_name,last_name from test.subscriber
+where  
+birth_date
+>DATEADD(year, -30, GETDATE())
+and sub_id is not null
+
+Find out which group has maximum subgroups.
+-;with sgcte as (select grp_id,
+ROW_NUMBER() OVER (PARTITION BY grp_id ORDER BY grp_id)cnt
+from test.groupsubgroup
+)
+,sgcte1 as
+(select max(cnt) cnt from sgcte)
+select a.grp_id,a.cnt from sgcte a
+inner join sgcte1 b
+on a.cnt=b.cnt
+
+Find out hospital which serve most number of patients
+- with hospcte as (select h.hospital_name,
+rank() OVER (PARTITION BY p.hospital_id
+ORDER BY p.patient_id
+)cnt
+from test.patient p
+join test.hospital h
+on p.hospital_id=h.hospital_id
+)
+,hospcte1 as
+(select max(cnt) cnt from hospcte)
+select a.hospital_name,a.cnt from hospcte a
+inner join hospcte1 b
+on a.cnt=b.cnt;
+
+-- Find out total number of claims which were rejected
+select count(*) from test.claims where claim_or_rejected='N'
+
+
+-- From where most claims are coming (city)
+;with CLAIMS as (select city,
+ROW_NUMBER() OVER (PARTITION BY city ORDER BY claim_id)cnt
+from test.claims  c
+join test.patient p
+on c.patient_id=p.patient_id
+)
+,CLAIMS1 as
+(select max(cnt) cnt from CLAIMS)
+select a.city,b.cnt from CLAIMS a
+inner join CLAIMS1 b
+on a.cnt=b
+
+
+-- Which groups of policies subscriber subscribe mostly Government or private
+
+select grp_type,count(grp_id) from test.group group by grp_type
+
+-- Find out Which group is most profitable
+
+with cte as (
+select max(premium_written) maxprofit from test.group
+)
+select g.grp_name,premium_written from cte c
+inner join test.group g
+on g.premium_written=c.maxprofit
+
+-- List all the patients below age of 18 who admit for cancer
+
+ select * from test.patient
+where disease_name like '%cancer%'
+and patient_birth_date>DATEADD(year, -18, GETDATE())
+
+-- List patients who have cashless insurance and have total charges greater than or equal for Rs. 50,000.
+
+select * from test.patient p
+join test.claims c
+on p.patient_id=c.patient_id
+where c.claim_amount>=50000
+
+-- List female patients over the age of 40 that have undergone knee surgery in the past year
+
+ 
+
+select * from test.patient p
+where
+patient_gender='Female'
+and  patient_birth_date<DATEADD(year, -40, GETDATE())
+and disease_name like '%surgery%
